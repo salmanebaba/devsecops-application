@@ -1,0 +1,5 @@
+# Merge with compose.yaml to run the API on the host during development.
+services:
+  db:
+    ports:
+      - "127.0.0.1:15432:5432"

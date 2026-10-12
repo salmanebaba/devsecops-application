@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:17-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+    environment:
+      POSTGRES_USER: lab_test
+      POSTGRES_DB: lab_test
+      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD:?The integration runner provides a random password}
+      APP_DB_PASSWORD: ${TEST_APP_DB_PASSWORD:?The integration runner provides a random password}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - ./scripts/init-app-user.sh:/docker-entrypoint-initdb.d/001-app-user.sh:ro
+    ports:
+      - "127.0.0.1::5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab_test -d lab_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build-test/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+.npm-cache/
+reports/
+*.tfstate*

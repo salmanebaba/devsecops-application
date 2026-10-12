@@ -1,0 +1,63 @@
+name: devsecops-app
+
+x-application: &application
+  image: devsecops-demo-api:0.1.0
+  read_only: true
+  tmpfs:
+    - /tmp:size=16m,mode=1777
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  db:
+    image: postgres:17-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Run npm run env:init}
+      POSTGRES_DB: ${POSTGRES_DB:?Run npm run env:init}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run npm run env:init}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Run npm run env:init}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-app-user.sh:/docker-entrypoint-initdb.d/001-app-user.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    <<: *application
+    pull_policy: never
+    command: ["dist/database/migrate.js"]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    healthcheck:
+      disable: true
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *application
+    build:
+      context: .
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgresql://lab_app_user:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET:?Run npm run env:init}
+      JWT_TTL_SECONDS: ${JWT_TTL_SECONDS:-900}
+      DOCS_ENABLED: ${DOCS_ENABLED:-false}
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-data:
