@@ -27,11 +27,11 @@ pipeline {
         sh '"$CI_TOOL_ROOT/checkov/bin/python" source/security-platform/ci/gate.py evidence/evidence.json --opa "$CI_TOOL_ROOT/bin/opa" --policy source/security-platform/policies/pre_stage.rego'
       }
     }
-    stage('Candidate ready for publishing configuration') {
-      steps { echo 'Pre-staging checks passed. GHCR publishing and protected deployment require the account connection and later deployment workflow.' }
+    stage('Candidate ready for protected publishing') {
+      steps { echo 'Pre-staging checks passed. The operator publisher revalidates this exact archived OCI image before private GHCR upload.' }
     }
   }
   post {
-    always { archiveArtifacts artifacts: 'evidence/*.json,evidence/*.log,evidence/rendered/*.yaml', allowEmptyArchive: true, fingerprint: true }
+    always { archiveArtifacts artifacts: 'evidence/*.json,evidence/*.log,evidence/candidate.oci.tar,evidence/rendered/*.yaml', allowEmptyArchive: true, fingerprint: true }
   }
 }

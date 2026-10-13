@@ -102,9 +102,9 @@ one synthetic account per invocation; its task is removed after successful check
 
 ## Implementation boundaries
 
-The image uses pinned Node/PostgreSQL digests and npm's dependency lockfile. The
-runtime image excludes development dependencies and source files, runs as the
-`node` user, and has a read-only filesystem with dropped Linux capabilities in
+The image uses pinned build/runtime Node and PostgreSQL digests and npm's dependency lockfile. The
+runtime image excludes development dependencies and source files, uses a Distroless Debian 13 runtime with Node 22, runs as
+UID/GID `10000`, and has a read-only filesystem with dropped Linux capabilities in
 Compose. The database role used by the API cannot alter schema or migration history.
 
 Password hashes use Node's scrypt with `N=32768`, `r=8`, `p=3`, random salts, and
