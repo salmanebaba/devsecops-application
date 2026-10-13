@@ -12,6 +12,7 @@ COPY package.json package-lock.json .npmrc ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 FROM gcr.io/distroless/nodejs22-debian13:nonroot@sha256:ec2313763dd43931543bd03830466e0c409ce73a487e8d46f10db72d3b816c1c AS runtime
+LABEL org.opencontainers.image.source="https://github.com/salmanebaba/devsecops-application"
 ENV NODE_ENV=production PORT=3000 PATH=/nodejs/bin:/usr/local/bin:/usr/bin:/bin
 WORKDIR /app
 COPY --from=production-dependencies --chown=10000:10000 /app/node_modules ./node_modules
